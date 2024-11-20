@@ -5,12 +5,17 @@ const userRoutes = require("./api/users/users.routes");
 const notFoundHandler = require("./middlewares/notFoundHandler");
 const errorHandler = require("./middlewares/errorHandler");
 const dotenv = require("dotenv");
+const passport = require("passport");
+const { localStrategy, jwtStrategy } = require("./middlewares/passport");
 dotenv.config();
-
-const app = express();
 connectDb();
 
+const app = express();
+
 app.use(express.json());
+app.use(passport.initialize());
+passport.use(localStrategy);
+passport.use(jwtStrategy);
 
 app.use("/urls", urlRoutes);
 app.use(userRoutes);
@@ -18,6 +23,6 @@ app.use(userRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(8000, () => {
+app.listen(8001, () => {
   console.log("The application is running on localhost:8000");
 });

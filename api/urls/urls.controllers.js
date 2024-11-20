@@ -2,17 +2,19 @@ const Url = require("../../models/Url");
 const shortid = require("shortid");
 const User = require("../../models/User");
 
-const baseUrl = "http:localhost:8000/urls";
+const baseUrl = "http:localhost:8001/urls";
 
 exports.shorten = async (req, res) => {
   // create url code
   const urlCode = shortid.generate();
+  console.log(urlCode, "urlCode");
+
   try {
     req.body.shortUrl = `${baseUrl}/${urlCode}`;
     req.body.urlCode = urlCode;
-    req.body.userId = req.params.userId;
+    req.body.userId = req.user.userId;
     const newUrl = await Url.create(req.body);
-    await User.findByIdAndUpdate(req.params.userId, {
+    await User.findByIdAndUpdate(req.user.userId, {
       $push: { urls: newUrl._id },
     });
     res.json(newUrl);
