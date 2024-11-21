@@ -7,14 +7,12 @@ const baseUrl = "http:localhost:8001/urls";
 exports.shorten = async (req, res) => {
   // create url code
   const urlCode = shortid.generate();
-  console.log(urlCode, "urlCode");
-
   try {
     req.body.shortUrl = `${baseUrl}/${urlCode}`;
     req.body.urlCode = urlCode;
-    req.body.userId = req.user.userId;
+    req.body.userId = req.user._id;
     const newUrl = await Url.create(req.body);
-    await User.findByIdAndUpdate(req.user.userId, {
+    await User.findByIdAndUpdate(req.user._id, {
       $push: { urls: newUrl._id },
     });
     res.json(newUrl);
@@ -35,11 +33,16 @@ exports.redirect = async (req, res) => {
     next(err);
   }
 };
-
-exports.deleteUrl = async (req, res) => {
+exports.deleteUrl = async (req, res, next) => {
   try {
-    const url = await Url.findOne({ urlCode: req.params.code });
+    const url = await Url.findOne({ urlCode: req.params.code }).populate(
+      "userId"
+    );
+
     if (url) {
+      if (!url.userId._id.equals(req.user._id)) {
+        return res.status(403).json({ message: "You cannot delete this URL." });
+      }
       await Url.findByIdAndDelete(url._id);
       return res.status(201).json("Deleted");
     } else {
